@@ -1,6 +1,6 @@
 import * as lightDesk from '@synesthesia-project/light-desk';
 
-import {PlayStateData} from '@synesthesia-project/core/protocol/messages';
+import {PlayStateData} from '@synesthesia-project/core/protocols/broadcast/messages';
 import {CueFile} from '@synesthesia-project/core/file';
 import {
     prepareFile,
@@ -133,6 +133,11 @@ interface Layout {
   blackoutTransitionTime: number;
 }
 
+interface SimplePlayState {
+  effectiveStartTimeMillis: number;
+  file: CueFile;
+}
+
 function randomRGBChaseState(colors: RGBColor[], targetLayers: number[], timing: RGBChaseTiming): RGBChasePattern {
   return {
     patternType: 'rgbChase',
@@ -206,7 +211,7 @@ export class Display {
   // Mapping form universe to buffers
   private readonly buffers: {[id: number]: Int8Array} = {};
   private readonly layout: Layout;
-  private playState: PlayStateData | null;
+  private playState: SimplePlayState | null;
 
   private readonly transitionInterval: Interval;
   private readonly colorInterval: Interval;
@@ -252,46 +257,58 @@ export class Display {
     this.colorInterval = new Interval(this.pickNextColorPalette.bind(this), CHANGE_INTERVAL * 3);
   }
 
-  public newSynesthesiaPlayState(state: PlayStateData | null): void {
-    this.playState = state ? {
-      effectiveStartTimeMillis: state.effectiveStartTimeMillis,
-      file: prepareFile(state.file)
-    } : null;
-    if (this.playState) {
-      // Mapping from groups to list of synesthesia layers it's targeting
-      const groupsToLayers: {[id: string]: number[]} = {};
-      for (const fixture of this.config.fixtures)
-        groupsToLayers[fixture.group] = [];
-
-      // Assign a group to each layer
-      for (let i = 0; i < this.playState.file.layers.length; i++) {
-        // find the group with the least number of layers
-        let currentMinGroup: {group: string, layersCount: number} | null = null;
-        for (const group of Object.keys(groupsToLayers)) {
-          const layersCount = groupsToLayers[group].length;
-          if (currentMinGroup === null || currentMinGroup.layersCount > layersCount)
-            currentMinGroup = {group, layersCount};
+  public newSynesthesiaPlayState(state: PlayStateData | null, getFile: (hash: string) => Promise<CueFile>) {
+    this.playState = null;
+    // TODO: add support for multiple simultaneous layers
+    // TODO: add support for playSpeed
+    if (state && state.layers.length >= 1) {
+      const layer = state.layers[0];
+      getFile(layer.fileHash).then(file => {
+        if (this.playState === null) {
+          this.playState = {
+            file: prepareFile(file),
+            effectiveStartTimeMillis: layer.effectiveStartTimeMillis
+          };
+          this.updateSynesthesiaPlayState(this.playState);
         }
-        if (currentMinGroup)
-          groupsToLayers[currentMinGroup.group].push(i);
-      }
-      // For every group, if it has no layers, randomly pick one
-      for (const group of Object.keys(groupsToLayers)) {
-        if (groupsToLayers[group].length === 0)
-          groupsToLayers[group].push(Math.floor(Math.random() * this.playState.file.layers.length));
-      }
-      // create the layout, do a random chaser for now for every fixture
-      const colorPallete = randomRGBColorPallete();
-      const fixturePatterns: FixturePatternAndOpacity[] = this.config.fixtures.map(config => ({
-        pattern: randomRGBChaseState(colorPallete, groupsToLayers[config.group], this.layout.timing),
-        opacity: 1
-      }));
-
-      for (let i = 0; i < this.layout.fixtures.length; i++) {
-        this.layout.fixtures[i].pattern = singlePattern([fixturePatterns[i]]);
-      }
+      });
     }
-    console.log('newSynesthesiaPlayState', this.playState );
+    console.log('newSynesthesiaPlayState', this.playState);
+  }
+
+  private updateSynesthesiaPlayState(state: SimplePlayState): void {
+    // Mapping from groups to list of synesthesia layers it's targeting
+    const groupsToLayers: {[id: string]: number[]} = {};
+    for (const fixture of this.config.fixtures)
+      groupsToLayers[fixture.group] = [];
+
+    // Assign a group to each layer
+    for (let i = 0; i < state.file.layers.length; i++) {
+      // find the group with the least number of layers
+      let currentMinGroup: {group: string, layersCount: number} | null = null;
+      for (const group of Object.keys(groupsToLayers)) {
+        const layersCount = groupsToLayers[group].length;
+        if (currentMinGroup === null || currentMinGroup.layersCount > layersCount)
+          currentMinGroup = {group, layersCount};
+      }
+      if (currentMinGroup)
+        groupsToLayers[currentMinGroup.group].push(i);
+    }
+    // For every group, if it has no layers, randomly pick one
+    for (const group of Object.keys(groupsToLayers)) {
+      if (groupsToLayers[group].length === 0)
+        groupsToLayers[group].push(Math.floor(Math.random() * state.file.layers.length));
+    }
+    // create the layout, do a random chaser for now for every fixture
+    const colorPallete = randomRGBColorPallete();
+    const fixturePatterns: FixturePatternAndOpacity[] = this.config.fixtures.map(config => ({
+      pattern: randomRGBChaseState(colorPallete, groupsToLayers[config.group], this.layout.timing),
+      opacity: 1
+    }));
+
+    for (let i = 0; i < this.layout.fixtures.length; i++) {
+      this.layout.fixtures[i].pattern = singlePattern([fixturePatterns[i]]);
+    }
   }
 
   /**
@@ -599,7 +616,7 @@ export class Display {
     const dimmersGroup = new lightDesk.Group();
     deskGroup.addChild(dimmersGroup);
 
-    const masterBrightness = new lightDesk.Slider(this.layout.masterBrightness, 0, 1, 0.05);
+    const masterBrightness = new lightDesk.SliderButton(this.layout.masterBrightness, 0, 1, 0.05);
     this.addListener({
       masterBrightnessChanges: value => masterBrightness.setValue(value)
     });
@@ -612,12 +629,12 @@ export class Display {
     dimmersGroup.addChild(new lightDesk.Label('Blackout:'));
     dimmersGroup.addChild(blackout);
 
-    const waitTime = new lightDesk.Slider(this.layout.timing.waitTime, 0, 600, 5);
+    const waitTime = new lightDesk.SliderButton(this.layout.timing.waitTime, 0, 600, 5);
     waitTime.addListener(value => this.layout.timing.waitTime = value);
     dimmersGroup.addChild(new lightDesk.Label('Delay Time:'));
     dimmersGroup.addChild(waitTime);
 
-    const transitionTime = new lightDesk.Slider(this.layout.timing.transitionTime, 0, 600, 5);
+    const transitionTime = new lightDesk.SliderButton(this.layout.timing.transitionTime, 0, 600, 5);
     transitionTime.addListener(value => this.layout.timing.transitionTime = value);
     dimmersGroup.addChild(new lightDesk.Label('Transition Time:'));
     dimmersGroup.addChild(transitionTime);

@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var gutil = require("gulp-util");
 var clean = require('gulp-clean');
 var ts = require('gulp-typescript');
 var tslint = require('gulp-tslint');
@@ -29,7 +30,7 @@ gulp.task('tslint', function() {
   return gulp.src(['src/**/*.ts'])
   .pipe(tslint({
     formatter: 'verbose',
-    configuration: '../tslint.json'
+    configuration: 'tslint.json'
   }))
   .on('error', handleError)
   .pipe(tslint.report());

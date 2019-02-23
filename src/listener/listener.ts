@@ -1,51 +1,59 @@
 import * as WebSocket from 'ws';
 import * as constants from '@synesthesia-project/core/constants';
-import {ConsumerEndpoint, messages} from '@synesthesia-project/core/protocol';
+import { DownstreamEndpoint, messages } from '@synesthesia-project/core/protocols/broadcast';
+import { CueFile } from '@synesthesia-project/core/file';
 
-export type StateListener = (state: messages.PlayStateData | null) => void;
+export type StateListener = (state: messages.PlayStateData | null, getFile: (hash: string) => Promise<CueFile>) => void;
 
-class SynesthesiaConsumerProtocol {
+// TODO: reimplement incoming connections
+// export class SynesthesiaConsumerServer {
+//   public constructor(stateUpdated: StateListener) {
+//     const wss = new WebSocket.Server({
+//       perMessageDeflate: false,
+//       port: constants.DEFAULT_SYNESTHESIA_PORT
+//     });
 
-  private readonly ws: WebSocket;
+//     wss.on('connection', connection => {
+//       const url = connection.upgradeReq.url;
+//       if (url === constants.) {
+//         const proto = new SynesthesiaConsumerProtocol(connection, stateUpdated);
+//         return;
+//       }
+//       console.error('unrecognized websocket url: ', url);
+//       connection.close();
+//     });
+//   }
+// }
 
-  public constructor(ws: WebSocket, stateUpdated: StateListener) {
-    console.log('Initialising SynesthesiaConsumerProtocol');
-
-    this.ws = ws;
-
-    const endpoint = new ConsumerEndpoint(
-      msg => ws.send(JSON.stringify(msg)),
-      state => stateUpdated(state)
-    );
-    ws.onclose = () => {
-      endpoint.closed();
-      stateUpdated(null);
-    };
-    ws.onmessage = msg => endpoint.recvMessage(JSON.parse(msg.data));
-  }
-}
-
-export class SynesthesiaConsumerServer {
+export class SynesthesiaConsumerClient {
   public constructor(stateUpdated: StateListener) {
-    const wss = new WebSocket.Server({
-      perMessageDeflate: false,
-      port: constants.DEFAULT_SYNESTHESIA_PORT
+    const ws = new WebSocket(`ws://localhost:${constants.DEFAULT_SYNESTHESIA_PORT}/listen`);
+    ws.addEventListener('open', () => {
+      const endpoint = new DownstreamEndpoint(
+        msg => ws.send(JSON.stringify(msg)),
+        state => {
+          console.log('new state', state);
+          stateUpdated(state, getFile);
+        }
+      );
+      const getFile = endpoint.getFile.bind(endpoint);
+      ws.addEventListener('message', msg => {
+        endpoint.recvMessage(JSON.parse(msg.data));
+      });
+    });
+    ws.addEventListener('error', err => {
+      // TODO
+      console.error(err);
+    });
+    ws.addEventListener('close', err => {
+      // TODO
     });
 
-    wss.on('connection', connection => {
-      const url = connection.upgradeReq.url;
-      if (url === constants.SYNESTHESIA_WEBSOCKET_PATH) {
-        const proto = new SynesthesiaConsumerProtocol(connection, stateUpdated);
-        return;
-      }
-      console.error('unrecognized websocket url: ', url);
-      connection.close();
-    });
   }
 }
 
 export class SynesthesiaListener {
   public constructor(stateUpdated: StateListener) {
-    const server = new SynesthesiaConsumerServer(stateUpdated);
+    const server = new SynesthesiaConsumerClient(stateUpdated);
   }
 }
