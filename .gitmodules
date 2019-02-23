@@ -1,3 +1,6 @@
 [submodule "external/core"]
 	path = external/core
 	url = https://github.com/synesthesia-project/core.git
+[submodule "external/light-desk"]
+	path = external/light-desk
+	url = https://github.com/synesthesia-project/light-desk.git
