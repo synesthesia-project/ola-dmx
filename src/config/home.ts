@@ -48,28 +48,28 @@ const config: Config = {
       universe: 0,
       startChannel: 1,
       channels: simpleRgbFixtureChannels,
-      group: 'par',
+      group: 'par1',
       position: 1
     },
     {
       universe: 0,
       startChannel: 4,
       channels: simpleRgbFixtureChannels,
-      group: 'par',
+      group: 'par1',
       position: 2
     },
     {
       universe: 0,
       startChannel: 7,
       channels: simpleRgbFixtureChannels,
-      group: 'par',
+      group: 'par2',
       position: 3
     },
     {
       universe: 0,
       startChannel: 10,
       channels: simpleRgbFixtureChannels,
-      group: 'par',
+      group: 'par2',
       position: 4
     },
     // {
@@ -136,7 +136,10 @@ const config: Config = {
   ],
   groups: [
     {
-    id: 'par'
+      id: 'par1'
+    },
+    {
+      id: 'par2'
     },
     // {
     //   id: 'moving-head-1'
