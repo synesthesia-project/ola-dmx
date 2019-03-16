@@ -16,16 +16,16 @@ steps:
 
 - script: |
     yarn --cwd external/core install
-    gulp --gulpfile external/core/gulpfile.js
+    yarn --cwd external/core run build
   displayName: 'build dependency: core'
 
 - script: |
     yarn --cwd external/light-desk install
-    gulp --gulpfile external/light-desk/gulpfile.js
+    yarn --cwd external/light-desk run build
   displayName: 'build dependency: light-desk'
 
 - script: |
     yarn install
     git checkout node_modules
-    gulp
+    yarn run build
   displayName: 'build ola-dmx'
