@@ -12,7 +12,7 @@ const proxy = new DmxProxy(PYTHON_PROXY);
 
 const display = new Display(getConfig(), proxy);
 
-const consumer = new SynesthesiaListener(display.newSynesthesiaPlayState);
+new SynesthesiaListener(display.newSynesthesiaPlayState).connectToServer();
 
 display.run();
 

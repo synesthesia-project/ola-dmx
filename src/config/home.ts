@@ -1,6 +1,6 @@
-import {Channel, Fixture, Config} from './';
+import {Channel, Config} from './';
 
-const fixtures: Fixture[] = [];
+// const fixtures: Fixture[] = [];
 
 const simpleRgbFixtureChannels: Channel[] = [
   {kind: 'color', color: 'r'},
@@ -8,39 +8,39 @@ const simpleRgbFixtureChannels: Channel[] = [
   {kind: 'color', color: 'b'}
 ];
 
-const simpleRgbFixtureChannels2: Channel[] = [
-  {kind: 'static', value: 255}, // dimmer
-  {kind: 'color', color: 'r'},
-  {kind: 'color', color: 'g'},
-  {kind: 'color', color: 'b'}
-];
+// const simpleRgbFixtureChannels2: Channel[] = [
+//   {kind: 'static', value: 255}, // dimmer
+//   {kind: 'color', color: 'r'},
+//   {kind: 'color', color: 'g'},
+//   {kind: 'color', color: 'b'}
+// ];
 
-const movingHeadOneFixtureChannels: Channel[] = [
-  {kind: 'movement', dimension: 'level'},
-  {kind: 'static', value: 0},
-  {kind: 'movement', dimension: 'vertical'},
-  {kind: 'static', value: 0},
-  {kind: 'speed'},
-  {kind: 'static', value: 255}, // dimmer
-  {kind: 'strobe'},
-  {kind: 'color', color: 'r'},
-  {kind: 'color', color: 'g'},
-  {kind: 'color', color: 'b'},
-  {kind: 'color', color: 'w'}
-];
+// const movingHeadOneFixtureChannels: Channel[] = [
+//   {kind: 'movement', dimension: 'level'},
+//   {kind: 'static', value: 0},
+//   {kind: 'movement', dimension: 'vertical'},
+//   {kind: 'static', value: 0},
+//   {kind: 'speed'},
+//   {kind: 'static', value: 255}, // dimmer
+//   {kind: 'strobe'},
+//   {kind: 'color', color: 'r'},
+//   {kind: 'color', color: 'g'},
+//   {kind: 'color', color: 'b'},
+//   {kind: 'color', color: 'w'}
+// ];
 
-const movingHeadTwoFixtureChannels: Channel[] = [
-  {kind: 'movement', dimension: 'level'},
-  {kind: 'static', value: 0},
-  {kind: 'movement', dimension: 'vertical'},
-  {kind: 'static', value: 0},
-  {kind: 'speed'},
-  {kind: 'static', value: 255}, // strobe / dimmer
-  {kind: 'color', color: 'r'},
-  {kind: 'color', color: 'g'},
-  {kind: 'color', color: 'b'},
-  {kind: 'color', color: 'w'}
-];
+// const movingHeadTwoFixtureChannels: Channel[] = [
+//   {kind: 'movement', dimension: 'level'},
+//   {kind: 'static', value: 0},
+//   {kind: 'movement', dimension: 'vertical'},
+//   {kind: 'static', value: 0},
+//   {kind: 'speed'},
+//   {kind: 'static', value: 255}, // strobe / dimmer
+//   {kind: 'color', color: 'r'},
+//   {kind: 'color', color: 'g'},
+//   {kind: 'color', color: 'b'},
+//   {kind: 'color', color: 'w'}
+// ];
 
 const config: Config = {
   fixtures: [

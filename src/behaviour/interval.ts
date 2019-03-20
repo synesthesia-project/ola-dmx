@@ -5,8 +5,7 @@ export class Interval {
   private callee: () => void;
   private intervalMs: number;
   private enabled = true;
-  private timeout: NodeJS.Timer;
-  private next: number;
+  private timeout: NodeJS.Timer | null = null;
 
   private lightDesk: {
     group: lightDesk.Group;
@@ -39,16 +38,15 @@ export class Interval {
   }
 
   private trigger() {
-    clearTimeout(this.timeout);
+    if (this.timeout !== null) clearTimeout(this.timeout);
     this.callee();
     this.resetTimeout();
   }
 
   private resetTimeout() {
-    clearTimeout(this.timeout);
+    if (this.timeout !== null) clearTimeout(this.timeout);
     if (this.enabled && this.intervalMs > 0) {
       this.timeout = setTimeout(this.trigger, this.intervalMs);
-      this.next = new Date().getTime() + this.intervalMs;
     }
   }
 }

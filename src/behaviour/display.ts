@@ -211,7 +211,7 @@ export class Display {
   // Mapping form universe to buffers
   private readonly buffers: {[id: number]: Int8Array} = {};
   private readonly layout: Layout;
-  private playState: SimplePlayState | null;
+  private playState: SimplePlayState | null = null;
 
   private readonly transitionInterval: Interval;
   private readonly colorInterval: Interval;

@@ -25,15 +25,22 @@ export type StateListener = (state: messages.PlayStateData | null, getFile: (has
 //   }
 // }
 
-export class SynesthesiaConsumerClient {
+export class SynesthesiaListener {
+
+  private readonly stateUpdated: StateListener;
+
   public constructor(stateUpdated: StateListener) {
+    this.stateUpdated = stateUpdated;
+  }
+
+  public connectToServer() {
     const ws = new WebSocket(`ws://localhost:${constants.DEFAULT_SYNESTHESIA_PORT}/listen`);
     ws.addEventListener('open', () => {
       const endpoint = new DownstreamEndpoint(
         msg => ws.send(JSON.stringify(msg)),
         state => {
           console.log('new state', state);
-          stateUpdated(state, getFile);
+          this.stateUpdated(state, getFile);
         }
       );
       const getFile = endpoint.getFile.bind(endpoint);
@@ -45,15 +52,10 @@ export class SynesthesiaConsumerClient {
       // TODO
       console.error(err);
     });
-    ws.addEventListener('close', err => {
+    ws.addEventListener('close', _err => {
       // TODO
     });
 
   }
 }
 
-export class SynesthesiaListener {
-  public constructor(stateUpdated: StateListener) {
-    const server = new SynesthesiaConsumerClient(stateUpdated);
-  }
-}
